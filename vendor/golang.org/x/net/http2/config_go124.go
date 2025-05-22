@@ -13,6 +13,9 @@ func fillNetHTTPServerConfig(conf *http2Config, srv *http.Server) {
 	fillNetHTTPConfig(conf, srv.HTTP2)
 }
 
+dependabot/go_modules/go_modules-a9111074a1
+// fillNetHTTPTransportConfig sets fields in conf from tr.HTTP2.
+=======
 dependabot/go_modules/go_modules-d3fced6277
 // fillNetHTTPServerConfig sets fields in conf from tr.HTTP2.
 =======
@@ -20,6 +23,7 @@ main
 // fillNetHTTPServerConfig sets fields in conf from tr.HTTP2.
 =======
 // fillNetHTTPTransportConfig sets fields in conf from tr.HTTP2.
+main
 main
 main
 func fillNetHTTPTransportConfig(conf *http2Config, tr *http.Transport) {

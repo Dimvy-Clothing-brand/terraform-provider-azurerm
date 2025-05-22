@@ -25,12 +25,15 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"net/textproto"
+dependabot/go_modules/go_modules-a9111074a1
+=======
 dependabot/go_modules/go_modules-d3fced6277
 =======
 mainmain
 	"sort"
 =======
 main
+>main
 	"strconv"
 	"strings"
 	"sync"
@@ -381,12 +384,16 @@ type ClientConn struct {
 	doNotReuse       bool       // whether conn is marked to not be reused for any future requests
 	closing          bool
 	closed           bool
+dependabot/go_modules/go_modules-a9111074a1
+	closedOnIdle     bool                     // true if conn was closed for idleness
+=======
 dependabot/go_modules/go_modules-d3fced6277
 =======
 main
 =======
 	closedOnIdle     bool                     // true if conn was closed for idleness
 mainmain
+main
 	seenSettings     bool                     // true if we've seen a settings frame, false otherwise
 	seenSettingsChan chan struct{}            // closed when seenSettings is true or frame reading fails
 	wantSettingsAck  bool                     // we sent a SETTINGS frame and haven't heard back
@@ -1101,6 +1108,14 @@ func (cc *ClientConn) idleStateLocked() (st clientConnIdleState) {
 
 	// If this connection has never been used for a request and is closed,
 	// then let it take a request (which will fail).
+dependabot/go_modules/go_modules-a9111074a1
+	// If the conn was closed for idleness, we're racing the idle timer;
+	// don't try to use the conn. (Issue #70515.)
+	//
+	// This avoids a situation where an error early in a connection's lifetime
+	// goes unreported.
+	if cc.nextStreamID == 1 && cc.streamsReserved == 0 && cc.closed && !cc.closedOnIdle {
+=======
 dependabot/go_modules/go_modules-d3fced6277
 =======
 mainmain
@@ -1117,6 +1132,7 @@ dependabot/go_modules/go_modules-d3fced627
 	// This avoids a situation where an error early in a connection's lifetime
 	// goes unreported.
 	if cc.nextStreamID == 1 && cc.streamsReserved == 0 && cc.closed && !cc.closedOnIdle mamain
+main
 		st.canTakeNewRequest = true
 	}
 
@@ -1466,6 +1482,8 @@ func (cs *clientStream) writeRequest(req *http.Request, streamf func(*clientStre
 	cc := cs.cc
 	ctx := cs.ctx
 
+dependabot/go_modules/go_modules-a9111074a1
+=======
 	// wait for setting frames to be received, a server can change this value later,
 	// but we just wait for the first settings frame
 	var isExtendedConnect bool
@@ -1478,8 +1496,7 @@ func (cs *clientStream) writeRequest(req *http.Request, streamf func(*clientStre
 	var isExtendedConnect bool
 	if req.Method == "CONNECT" && req.Header.Get(":protocol") != "" {
 		isExtendedConnect = true
-	}
-
+main
 	// wait for setting frames to be received, a server can change this value later,
 	// but we just wait for the first settings frame
 	var isExtendedConnect bool
@@ -2063,6 +2080,8 @@ func (cs *clientStream) awaitFlowControl(maxBytes int) (taken int32, err error) 
 	}
 }
 
+dependabot/go_modules/go_modules-a9111074a1
+=======
 main
 func validateHeaders(hdrs http.Header) string {
 	for k, vv := range hdrs {
@@ -2277,6 +2296,7 @@ func shouldSendReqContentLength(method string, contentLength int64) bool {
 }
 
 =======main
+main
 // requires cc.wmu be held.
 func (cc *ClientConn) encodeTrailers(trailer http.Header) ([]byte, error) {
 	cc.hbuf.Reset()
@@ -2433,6 +2453,14 @@ func (rl *clientConnReadLoop) cleanup() {
 	// This avoids a situation where new connections are constantly created,
 	// added to the pool, fail, and are removed from the pool, without any error
 	// being surfaced to the user.
+dependabot/go_modules/go_modules-a9111074a1
+	unusedWaitTime := 5 * time.Second
+	if cc.idleTimeout > 0 && unusedWaitTime > cc.idleTimeout {
+		unusedWaitTime = cc.idleTimeout
+	}
+	idleTime := cc.t.now().Sub(cc.lastActive)
+	if atomic.LoadUint32(&cc.atomicReused) == 0 && idleTime < unusedWaitTime && !cc.closedOnIdle {
+=======
 dependabot/go_modules/go_modules-d3fced6277
 	const unusedWaitTime = 5 * time.Second
 	idleTime := cc.t.now().Sub(cc.lastActive)
@@ -2449,6 +2477,7 @@ main
 	}
 	idleTime := cc.t.now().Sub(cc.lastActive)
 	if atomic.LoadUint32(&cc.atomicReused) == 0 && idleTime < unusedWaitTime && !cc.closedOnIdle maimain
+main
 		cc.idleTimer = cc.t.afterFunc(unusedWaitTime-idleTime, func() {
 			cc.t.connPool().MarkDead(cc)
 		})
@@ -2567,9 +2596,6 @@ func (rl *clientConnReadLoop) run() error {
 		if err != nil {
 			if VerboseLogs {
 				cc.vlogf("http2: Transport conn %p received error from processing frame %v: %v", cc, summarizeFrame(f), err)
-			}
-			if !cc.seenSettings {
-				close(cc.seenSettingsChan)
 			}
 			return err
 		}

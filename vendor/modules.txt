@@ -1475,6 +1475,10 @@ github.com/zclconf/go-cty/cty/function/stdlib
 github.com/zclconf/go-cty/cty/gocty
 github.com/zclconf/go-cty/cty/json
 github.com/zclconf/go-cty/cty/set
+dependabot/go_modules/go_modules-a9111074a1
+# golang.org/x/crypto v0.35.0
+## explicit; go 1.23.0
+=======
 dependabot/go_modules/go_modules-d3fced6277
 =======
 main
@@ -1484,6 +1488,7 @@ main
 =======
 # golang.org/x/crypto v0.36.0
 ## explicit; go 1.23.0
+main
 main
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
@@ -1506,6 +1511,10 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
+dependabot/go_modules/go_modules-a9111074a1
+# golang.org/x/net v0.36.0
+## explicit; go 1.23.0
+=======
 dependabot/go_modules/go_modules-d3fced6277
 =======
 main
@@ -1515,6 +1524,7 @@ main
 =======
 # golang.org/x/net v0.37.0
 ## explicit; go 1.23.0
+main
 main
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
@@ -1527,19 +1537,23 @@ golang.org/x/net/trace
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
+dependabot/go_modules/go_modules-a9111074a1
+# golang.org/x/sync v0.11.0
+=======
 dependabot/go_modules/go_modules-d3fced6277
 =======
 main
 main
 # golang.org/x/sync v0.10.0
+main
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.28.0
+# golang.org/x/sys v0.30.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.21.0
+# golang.org/x/text v0.22.0
 ## explicit; go 1.18
 =======
 # golang.org/x/sync v0.12.0

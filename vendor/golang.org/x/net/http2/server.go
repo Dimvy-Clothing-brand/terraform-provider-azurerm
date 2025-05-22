@@ -2233,6 +2233,14 @@ func (sc *serverConn) newStream(id, pusherID uint32, state streamState) *stream 
 func (sc *serverConn) newWriterAndRequest(st *stream, f *MetaHeadersFrame) (*responseWriter, *http.Request, error) {
 	sc.serveG.check()
 
+dependabot/go_modules/go_modules-a9111074a1
+	rp := httpcommon.ServerRequestParam{
+		Method:    f.PseudoValue("method"),
+		Scheme:    f.PseudoValue("scheme"),
+		Authority: f.PseudoValue("authority"),
+		Path:      f.PseudoValue("path"),
+		Protocol:  f.PseudoValue("protocol"),
+=======
 main
 	rp := requestParam{
 		method:    f.PseudoValue("method"),
@@ -2240,10 +2248,11 @@ main
 		authority: f.PseudoValue("authority"),
 		path:      f.PseudoValue("path"),
 		protocol:  f.PseudoValue("protocol"),
+main
 	}
 
 	// extended connect is disabled, so we should not see :protocol
-	if disableExtendedConnectProtocol && rp.protocol != "" {
+	if disableExtendedConnectProtocol && rp.Protocol != "" {
 		return nil, nil, sc.countError("bad_connect", streamError(f.StreamID, ErrCodeProtocol))
 dependabot/go_modules/go_modules-d3fced6277
 =======
@@ -2256,6 +2265,11 @@ dependabot/go_modules/go_modules-d3fced6277
 		Protocol:  f.PseudoValue("protocol"),main
 	}
 
+dependabot/go_modules/go_modules-a9111074a1
+	isConnect := rp.Method == "CONNECT"
+	if isConnect {
+		if rp.Protocol == "" && (rp.Path != "" || rp.Scheme != "" || rp.Authority == "") {
+=======
 	// extended connect is disabled, so we should not see :protocol
 	if disableExtendedConnectProtocol && rp.Protocol != "" {
 		return nil, nil, sc.countError("bad_connect", streamError(f.StreamID, ErrCodeProtocol)main
@@ -2269,7 +2283,7 @@ dependabot/go_modules/go_modules-d3fced6277
 main
 		if rp.protocol == "" && (rp.path != "" || rp.scheme != "" || rp.authority == "") {
 =======
-		if rp.Protocol == "" && (rp.Path != "" || rp.Scheme != "" || rp.Authority == ""main
+		if rp.Protocol == "" && (rp.Path != "" || rp.Scheme != "" || rp.Authority == ""mainmain
 			return nil, nil, sc.countError("bad_connect", streamError(f.StreamID, ErrCodeProtocol))
 		}
 	} else if rp.Method == "" || rp.Path == "" || (rp.Scheme != "https" && rp.Scheme != "http") {
@@ -2290,6 +2304,11 @@ main
 	rp.Header = header
 	for _, hf := range f.RegularFields() {
 		header.Add(sc.canonicalHeader(hf.Name), hf.Value)
+dependabot/go_modules/go_modules-a9111074a1
+	}
+	if rp.Authority == "" {
+		rp.Authority = header.Get("Host")
+=======
 	}
 	if rp.Authority == "" {
 		rp.Authority = header.Get("Host")
@@ -2298,10 +2317,10 @@ main
 		header.Set(":protocol", rp.Protocol)
 	}
 	if rp.protocol != "" {
-		rp.header.Set(":protocol", rp.protocol)
+		rp.header.Set(":protocol", rp.protocol)main
 	}
-	if rp.protocol != "" {
-		rp.header.Set(":protocol", rp.protocol)
+	if rp.Protocol != "" {
+		header.Set(":protocol", rp.Protocol)
 	}
 
 	rw, req, err := sc.newWriterAndRequestNoBody(st, rp)
@@ -2326,6 +2345,9 @@ main
 	return rw, req, nil
 }
 
+dependabot/go_modules/go_modules-a9111074a1
+func (sc *serverConn) newWriterAndRequestNoBody(st *stream, rp httpcommon.ServerRequestParam) (*responseWriter, *http.Request, error) {
+=======
 main
 type requestParam struct {
 	method                  string
@@ -2336,7 +2358,7 @@ type requestParam struct {
 
 func (sc *serverConn) newWriterAndRequestNoBody(st *stream, rp requestParam) (*responseWriter, *http.Request, error) {
 =======
-func (sc *serverConn) newWriterAndRequestNoBody(st *stream, rp httpcommon.ServerRequestParam) (*responseWriter, *http.Request, error) main
+func (sc *serverConn) newWriterAndRequestNoBody(st *stream, rp httpcommon.ServerRequestParam) (*responseWriter, *http.Request, error) mainmain
 	sc.serveG.check()
 
 	var tlsState *tls.ConnectionState // nil if not scheme https
@@ -2344,6 +2366,11 @@ func (sc *serverConn) newWriterAndRequestNoBody(st *stream, rp httpcommon.Server
 		tlsState = sc.tlsState
 	}
 
+dependabot/go_modules/go_modules-a9111074a1
+	res := httpcommon.NewServerRequest(rp)
+	if res.InvalidReason != "" {
+		return nil, nil, sc.countError(res.InvalidReason, streamError(st.id, ErrCodeProtocol))
+=======
 main
 	needsContinue := httpguts.HeaderValuesContainsToken(rp.header["Expect"], "100-continue")
 	if needsContinue {
@@ -2389,6 +2416,7 @@ main
 	res := httpcommon.NewServerRequest(rp)
 	if res.InvalidReason != "" {
 		return nil, nil, sc.countError(res.InvalidReason, streamError(st.id, ErrCodeProtocolmain
+main
 	}
 
 	body := &requestBody{
