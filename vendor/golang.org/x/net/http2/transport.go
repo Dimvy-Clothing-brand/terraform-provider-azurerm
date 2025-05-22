@@ -25,6 +25,15 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"net/textproto"
+dependabot/go_modules/go_modules-a9111074a1
+=======
+dependabot/go_modules/go_modules-d3fced6277
+=======
+mainmain
+	"sort"
+=======
+main
+>main
 	"strconv"
 	"strings"
 	"sync"
@@ -375,7 +384,16 @@ type ClientConn struct {
 	doNotReuse       bool       // whether conn is marked to not be reused for any future requests
 	closing          bool
 	closed           bool
+dependabot/go_modules/go_modules-a9111074a1
 	closedOnIdle     bool                     // true if conn was closed for idleness
+=======
+dependabot/go_modules/go_modules-d3fced6277
+=======
+main
+=======
+	closedOnIdle     bool                     // true if conn was closed for idleness
+mainmain
+main
 	seenSettings     bool                     // true if we've seen a settings frame, false otherwise
 	seenSettingsChan chan struct{}            // closed when seenSettings is true or frame reading fails
 	wantSettingsAck  bool                     // we sent a SETTINGS frame and haven't heard back
@@ -1090,12 +1108,31 @@ func (cc *ClientConn) idleStateLocked() (st clientConnIdleState) {
 
 	// If this connection has never been used for a request and is closed,
 	// then let it take a request (which will fail).
+dependabot/go_modules/go_modules-a9111074a1
 	// If the conn was closed for idleness, we're racing the idle timer;
 	// don't try to use the conn. (Issue #70515.)
 	//
 	// This avoids a situation where an error early in a connection's lifetime
 	// goes unreported.
 	if cc.nextStreamID == 1 && cc.streamsReserved == 0 && cc.closed && !cc.closedOnIdle {
+=======
+dependabot/go_modules/go_modules-d3fced6277
+=======
+mainmain
+	//
+	// This avoids a situation where an error early in a connection's lifetime
+	// goes unreported.
+	if cc.nextStreamID == 1 && cc.streamsReserved == 0 && cc.closed {
+dependabot/go_modules/go_modules-d3fced627
+=======
+=======
+	// If the conn was closed for idleness, we're racing the idle timer;
+	// don't try to use the conn. (Issue #70515.)
+	//
+	// This avoids a situation where an error early in a connection's lifetime
+	// goes unreported.
+	if cc.nextStreamID == 1 && cc.streamsReserved == 0 && cc.closed && !cc.closedOnIdle mamain
+main
 		st.canTakeNewRequest = true
 	}
 
@@ -1445,6 +1482,21 @@ func (cs *clientStream) writeRequest(req *http.Request, streamf func(*clientStre
 	cc := cs.cc
 	ctx := cs.ctx
 
+dependabot/go_modules/go_modules-a9111074a1
+=======
+	// wait for setting frames to be received, a server can change this value later,
+	// but we just wait for the first settings frame
+	var isExtendedConnect bool
+	if req.Method == "CONNECT" && req.Header.Get(":protocol") != "" {
+		isExtendedConnect = true
+	}
+
+	// wait for setting frames to be received, a server can change this value later,
+	// but we just wait for the first settings frame
+	var isExtendedConnect bool
+	if req.Method == "CONNECT" && req.Header.Get(":protocol") != "" {
+		isExtendedConnect = true
+main
 	// wait for setting frames to be received, a server can change this value later,
 	// but we just wait for the first settings frame
 	var isExtendedConnect bool
@@ -2028,6 +2080,223 @@ func (cs *clientStream) awaitFlowControl(maxBytes int) (taken int32, err error) 
 	}
 }
 
+dependabot/go_modules/go_modules-a9111074a1
+=======
+main
+func validateHeaders(hdrs http.Header) string {
+	for k, vv := range hdrs {
+		if !httpguts.ValidHeaderFieldName(k) && k != ":protocol" {
+			return fmt.Sprintf("name %q", k)
+		}
+		for _, v := range vv {
+			if !httpguts.ValidHeaderFieldValue(v) {
+				// Don't include the value in the error,
+				// because it may be sensitive.
+				return fmt.Sprintf("value for header %q", k)
+			}
+		}
+	}
+	return ""
+}
+
+var errNilRequestURL = errors.New("http2: Request.URI is nil")
+
+func isNormalConnect(req *http.Request) bool {
+	return req.Method == "CONNECT" && req.Header.Get(":protocol") == ""
+}
+
+// requires cc.wmu be held.
+func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trailers string, contentLength int64) ([]byte, error) {
+	cc.hbuf.Reset()
+	if req.URL == nil {
+		return nil, errNilRequestURL
+	}
+
+	host := req.Host
+	if host == "" {
+		host = req.URL.Host
+	}
+	host, err := httpguts.PunycodeHostPort(host)
+	if err != nil {
+		return nil, err
+	}
+	if !httpguts.ValidHostHeader(host) {
+		return nil, errors.New("http2: invalid Host header")
+	}
+
+	var path string
+	if !isNormalConnect(req) {
+		path = req.URL.RequestURI()
+		if !validPseudoPath(path) {
+			orig := path
+			path = strings.TrimPrefix(path, req.URL.Scheme+"://"+host)
+			if !validPseudoPath(path) {
+				if req.URL.Opaque != "" {
+					return nil, fmt.Errorf("invalid request :path %q from URL.Opaque = %q", orig, req.URL.Opaque)
+				} else {
+					return nil, fmt.Errorf("invalid request :path %q", orig)
+				}
+			}
+		}
+	}
+
+	// Check for any invalid headers+trailers and return an error before we
+	// potentially pollute our hpack state. (We want to be able to
+	// continue to reuse the hpack encoder for future requests)
+	if err := validateHeaders(req.Header); err != "" {
+		return nil, fmt.Errorf("invalid HTTP header %s", err)
+	}
+	if err := validateHeaders(req.Trailer); err != "" {
+		return nil, fmt.Errorf("invalid HTTP trailer %s", err)
+	}
+
+	enumerateHeaders := func(f func(name, value string)) {
+		// 8.1.2.3 Request Pseudo-Header Fields
+		// The :path pseudo-header field includes the path and query parts of the
+		// target URI (the path-absolute production and optionally a '?' character
+		// followed by the query production, see Sections 3.3 and 3.4 of
+		// [RFC3986]).
+		f(":authority", host)
+		m := req.Method
+		if m == "" {
+			m = http.MethodGet
+		}
+		f(":method", m)
+		if !isNormalConnect(req) {
+			f(":path", path)
+			f(":scheme", req.URL.Scheme)
+		}
+		if trailers != "" {
+			f("trailer", trailers)
+		}
+
+		var didUA bool
+		for k, vv := range req.Header {
+			if asciiEqualFold(k, "host") || asciiEqualFold(k, "content-length") {
+				// Host is :authority, already sent.
+				// Content-Length is automatic, set below.
+				continue
+			} else if asciiEqualFold(k, "connection") ||
+				asciiEqualFold(k, "proxy-connection") ||
+				asciiEqualFold(k, "transfer-encoding") ||
+				asciiEqualFold(k, "upgrade") ||
+				asciiEqualFold(k, "keep-alive") {
+				// Per 8.1.2.2 Connection-Specific Header
+				// Fields, don't send connection-specific
+				// fields. We have already checked if any
+				// are error-worthy so just ignore the rest.
+				continue
+			} else if asciiEqualFold(k, "user-agent") {
+				// Match Go's http1 behavior: at most one
+				// User-Agent. If set to nil or empty string,
+				// then omit it. Otherwise if not mentioned,
+				// include the default (below).
+				didUA = true
+				if len(vv) < 1 {
+					continue
+				}
+				vv = vv[:1]
+				if vv[0] == "" {
+					continue
+				}
+			} else if asciiEqualFold(k, "cookie") {
+				// Per 8.1.2.5 To allow for better compression efficiency, the
+				// Cookie header field MAY be split into separate header fields,
+				// each with one or more cookie-pairs.
+				for _, v := range vv {
+					for {
+						p := strings.IndexByte(v, ';')
+						if p < 0 {
+							break
+						}
+						f("cookie", v[:p])
+						p++
+						// strip space after semicolon if any.
+						for p+1 <= len(v) && v[p] == ' ' {
+							p++
+						}
+						v = v[p:]
+					}
+					if len(v) > 0 {
+						f("cookie", v)
+					}
+				}
+				continue
+			}
+
+			for _, v := range vv {
+				f(k, v)
+			}
+		}
+		if shouldSendReqContentLength(req.Method, contentLength) {
+			f("content-length", strconv.FormatInt(contentLength, 10))
+		}
+		if addGzipHeader {
+			f("accept-encoding", "gzip")
+		}
+		if !didUA {
+			f("user-agent", defaultUserAgent)
+		}
+	}
+
+	// Do a first pass over the headers counting bytes to ensure
+	// we don't exceed cc.peerMaxHeaderListSize. This is done as a
+	// separate pass before encoding the headers to prevent
+	// modifying the hpack state.
+	hlSize := uint64(0)
+	enumerateHeaders(func(name, value string) {
+		hf := hpack.HeaderField{Name: name, Value: value}
+		hlSize += uint64(hf.Size())
+	})
+
+	if hlSize > cc.peerMaxHeaderListSize {
+		return nil, errRequestHeaderListSize
+	}
+
+	trace := httptrace.ContextClientTrace(req.Context())
+	traceHeaders := traceHasWroteHeaderField(trace)
+
+	// Header list size is ok. Write the headers.
+	enumerateHeaders(func(name, value string) {
+		name, ascii := lowerHeader(name)
+		if !ascii {
+			// Skip writing invalid headers. Per RFC 7540, Section 8.1.2, header
+			// field names have to be ASCII characters (just as in HTTP/1.x).
+			return
+		}
+		cc.writeHeader(name, value)
+		if traceHeaders {
+			traceWroteHeaderField(trace, name, value)
+		}
+	})
+
+	return cc.hbuf.Bytes(), nil
+}
+
+// shouldSendReqContentLength reports whether the http2.Transport should send
+// a "content-length" request header. This logic is basically a copy of the net/http
+// transferWriter.shouldSendContentLength.
+// The contentLength is the corrected contentLength (so 0 means actually 0, not unknown).
+// -1 means unknown.
+func shouldSendReqContentLength(method string, contentLength int64) bool {
+	if contentLength > 0 {
+		return true
+	}
+	if contentLength < 0 {
+		return false
+	}
+	// For zero bodies, whether we send a content-length depends on the method.
+	// It also kinda doesn't matter for http2 either way, with END_STREAM.
+	switch method {
+	case "POST", "PUT", "PATCH":
+		return true
+	default:
+		return false
+	}
+}
+
+=======main
+main
 // requires cc.wmu be held.
 func (cc *ClientConn) encodeTrailers(trailer http.Header) ([]byte, error) {
 	cc.hbuf.Reset()
@@ -2184,12 +2453,31 @@ func (rl *clientConnReadLoop) cleanup() {
 	// This avoids a situation where new connections are constantly created,
 	// added to the pool, fail, and are removed from the pool, without any error
 	// being surfaced to the user.
+dependabot/go_modules/go_modules-a9111074a1
 	unusedWaitTime := 5 * time.Second
 	if cc.idleTimeout > 0 && unusedWaitTime > cc.idleTimeout {
 		unusedWaitTime = cc.idleTimeout
 	}
 	idleTime := cc.t.now().Sub(cc.lastActive)
 	if atomic.LoadUint32(&cc.atomicReused) == 0 && idleTime < unusedWaitTime && !cc.closedOnIdle {
+=======
+dependabot/go_modules/go_modules-d3fced6277
+	const unusedWaitTime = 5 * time.Second
+	idleTime := cc.t.now().Sub(cc.lastActive)
+	if atomic.LoadUint32(&cc.atomicReused) == 0 && idleTime < unusedWaitTime {
+=======
+main
+	const unusedWaitTime = 5 * time.Second
+	idleTime := cc.t.now().Sub(cc.lastActive)
+	if atomic.LoadUint32(&cc.atomicReused) == 0 && idleTime < unusedWaitTime {
+=======
+	unusedWaitTime := 5 * time.Second
+	if cc.idleTimeout > 0 && unusedWaitTime > cc.idleTimeout {
+		unusedWaitTime = cc.idleTimeout
+	}
+	idleTime := cc.t.now().Sub(cc.lastActive)
+	if atomic.LoadUint32(&cc.atomicReused) == 0 && idleTime < unusedWaitTime && !cc.closedOnIdle maimain
+main
 		cc.idleTimer = cc.t.afterFunc(unusedWaitTime-idleTime, func() {
 			cc.t.connPool().MarkDead(cc)
 		})
