@@ -34,12 +34,17 @@ import (
 )
 
 var (
+dependabot/go_modules/go_modules-d3fced6277
+=======
+main
 main
 	VerboseLogs                    bool
 	logFrameWrites                 bool
 	logFrameReads                  bool
 	inTests                        bool
 	disableExtendedConnectProtocol bool
+dependabot/go_modules/go_modules-d3fced6277
+=======
 =======
 	VerboseLogs    bool
 	logFrameWrites bool
@@ -54,6 +59,7 @@ main
 	//
 	// Issue #71128.
 	disableExtendedConnectProtocol = truemain
+main
 )
 
 func init() {
@@ -66,12 +72,16 @@ func init() {
 		logFrameWrites = true
 		logFrameReads = true
 	}
+dependabot/go_modules/go_modules-d3fced6277
+	if strings.Contains(e, "http2xconnect=0") {
+		disableExtendedConnectProtocol = true
+=======
 main
 	if strings.Contains(e, "http2xconnect=0") {
 		disableExtendedConnectProtocol = true
 =======
 	if strings.Contains(e, "http2xconnect=1") {
-		disableExtendedConnectProtocol = falsmain
+		disableExtendedConnectProtocol = famain
 	}
 }
 

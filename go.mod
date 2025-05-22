@@ -36,6 +36,9 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/rickb777/date v1.12.5-0.20200422084442-6300e543c4d9
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3
+dependabot/go_modules/go_modules-d3fced6277
+=======
+main
 main
 	golang.org/x/crypto v0.31.0
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d
@@ -90,6 +93,8 @@ main
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
+dependabot/go_modules/go_modules-d3fced6277
+=======
 =======
 	github.com/zclconf/go-cty v1.16.2 // indirect
 	golang.org/x/mod v0.24.0 // indirect
@@ -98,6 +103,7 @@ main
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
+main
 main
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect

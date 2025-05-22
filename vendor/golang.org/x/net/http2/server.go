@@ -2245,6 +2245,8 @@ main
 	// extended connect is disabled, so we should not see :protocol
 	if disableExtendedConnectProtocol && rp.protocol != "" {
 		return nil, nil, sc.countError("bad_connect", streamError(f.StreamID, ErrCodeProtocol))
+dependabot/go_modules/go_modules-d3fced6277
+=======
 =======
 	rp := httpcommon.ServerRequestParam{
 		Method:    f.PseudoValue("method"),
@@ -2256,11 +2258,14 @@ main
 
 	// extended connect is disabled, so we should not see :protocol
 	if disableExtendedConnectProtocol && rp.Protocol != "" {
-		return nil, nil, sc.countError("bad_connect", streamError(f.StreamID, ErrCodeProtocol))
+		return nil, nil, sc.countError("bad_connect", streamError(f.StreamID, ErrCodeProtocol)main
 	}
 
 	isConnect := rp.Method == "CONNECT"
 	if isConnect {
+dependabot/go_modules/go_modules-d3fced6277
+		if rp.protocol == "" && (rp.path != "" || rp.scheme != "" || rp.authority == "") {
+=======
 main
 		if rp.protocol == "" && (rp.path != "" || rp.scheme != "" || rp.authority == "") {
 =======
@@ -2291,6 +2296,9 @@ main
 	}
 	if rp.Protocol != "" {
 		header.Set(":protocol", rp.Protocol)
+	}
+	if rp.protocol != "" {
+		rp.header.Set(":protocol", rp.protocol)
 	}
 	if rp.protocol != "" {
 		rp.header.Set(":protocol", rp.protocol)

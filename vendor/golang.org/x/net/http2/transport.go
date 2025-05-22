@@ -25,7 +25,9 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"net/textproto"
-main
+dependabot/go_modules/go_modules-d3fced6277
+=======
+mainmain
 	"sort"
 =======
 main
@@ -379,10 +381,12 @@ type ClientConn struct {
 	doNotReuse       bool       // whether conn is marked to not be reused for any future requests
 	closing          bool
 	closed           bool
+dependabot/go_modules/go_modules-d3fced6277
+=======
 main
 =======
 	closedOnIdle     bool                     // true if conn was closed for idleness
-main
+mainmain
 	seenSettings     bool                     // true if we've seen a settings frame, false otherwise
 	seenSettingsChan chan struct{}            // closed when seenSettings is true or frame reading fails
 	wantSettingsAck  bool                     // we sent a SETTINGS frame and haven't heard back
@@ -1097,18 +1101,22 @@ func (cc *ClientConn) idleStateLocked() (st clientConnIdleState) {
 
 	// If this connection has never been used for a request and is closed,
 	// then let it take a request (which will fail).
-main
+dependabot/go_modules/go_modules-d3fced6277
+=======
+mainmain
 	//
 	// This avoids a situation where an error early in a connection's lifetime
 	// goes unreported.
 	if cc.nextStreamID == 1 && cc.streamsReserved == 0 && cc.closed {
+dependabot/go_modules/go_modules-d3fced627
+=======
 =======
 	// If the conn was closed for idleness, we're racing the idle timer;
 	// don't try to use the conn. (Issue #70515.)
 	//
 	// This avoids a situation where an error early in a connection's lifetime
 	// goes unreported.
-	if cc.nextStreamID == 1 && cc.streamsReserved == 0 && cc.closed && !cc.closedOnIdle main
+	if cc.nextStreamID == 1 && cc.streamsReserved == 0 && cc.closed && !cc.closedOnIdle mamain
 		st.canTakeNewRequest = true
 	}
 
@@ -1457,6 +1465,13 @@ var errExtendedConnectNotSupported = errors.New("net/http: extended connect not 
 func (cs *clientStream) writeRequest(req *http.Request, streamf func(*clientStream)) (err error) {
 	cc := cs.cc
 	ctx := cs.ctx
+
+	// wait for setting frames to be received, a server can change this value later,
+	// but we just wait for the first settings frame
+	var isExtendedConnect bool
+	if req.Method == "CONNECT" && req.Header.Get(":protocol") != "" {
+		isExtendedConnect = true
+	}
 
 	// wait for setting frames to be received, a server can change this value later,
 	// but we just wait for the first settings frame
@@ -2418,6 +2433,11 @@ func (rl *clientConnReadLoop) cleanup() {
 	// This avoids a situation where new connections are constantly created,
 	// added to the pool, fail, and are removed from the pool, without any error
 	// being surfaced to the user.
+dependabot/go_modules/go_modules-d3fced6277
+	const unusedWaitTime = 5 * time.Second
+	idleTime := cc.t.now().Sub(cc.lastActive)
+	if atomic.LoadUint32(&cc.atomicReused) == 0 && idleTime < unusedWaitTime {
+=======
 main
 	const unusedWaitTime = 5 * time.Second
 	idleTime := cc.t.now().Sub(cc.lastActive)
@@ -2428,7 +2448,7 @@ main
 		unusedWaitTime = cc.idleTimeout
 	}
 	idleTime := cc.t.now().Sub(cc.lastActive)
-	if atomic.LoadUint32(&cc.atomicReused) == 0 && idleTime < unusedWaitTime && !cc.closedOnIdle main
+	if atomic.LoadUint32(&cc.atomicReused) == 0 && idleTime < unusedWaitTime && !cc.closedOnIdle maimain
 		cc.idleTimer = cc.t.afterFunc(unusedWaitTime-idleTime, func() {
 			cc.t.connPool().MarkDead(cc)
 		})
