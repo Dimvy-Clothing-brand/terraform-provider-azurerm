@@ -60,7 +60,14 @@ func configFromServer(h1 *http.Server, h2 *Server) http2Config {
 	return conf
 }
 
+dependabot/go_modules/go_modules-d3fced6277
 // configFromServer merges configuration settings from h2 and h2.t1.HTTP2
+=======
+main
+// configFromServer merges configuration settings from h2 and h2.t1.HTTP2
+=======
+// configFromTransport merges configuration settings from h2 and h2.t1.HTTP2
+mainmain
 // (the net/http Transport).
 func configFromTransport(h2 *Transport) http2Config {
 	conf := http2Config{
