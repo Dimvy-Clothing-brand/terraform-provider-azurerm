@@ -34,6 +34,13 @@ import (
 )
 
 var (
+main
+	VerboseLogs                    bool
+	logFrameWrites                 bool
+	logFrameReads                  bool
+	inTests                        bool
+	disableExtendedConnectProtocol bool
+=======
 	VerboseLogs    bool
 	logFrameWrites bool
 	logFrameReads  bool
@@ -46,7 +53,7 @@ var (
 	// Disable extended CONNECT by default for now.
 	//
 	// Issue #71128.
-	disableExtendedConnectProtocol = true
+	disableExtendedConnectProtocol = truemain
 )
 
 func init() {
@@ -59,8 +66,12 @@ func init() {
 		logFrameWrites = true
 		logFrameReads = true
 	}
+main
+	if strings.Contains(e, "http2xconnect=0") {
+		disableExtendedConnectProtocol = true
+=======
 	if strings.Contains(e, "http2xconnect=1") {
-		disableExtendedConnectProtocol = false
+		disableExtendedConnectProtocol = falsmain
 	}
 }
 
